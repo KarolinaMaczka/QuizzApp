@@ -4,4 +4,5 @@
 - in main.tf change the project to the new created
 - attach firebaase to the project
 - enable firebase email authentication
-- create my-credentials-json with you json credentials
+- add credentials.json to the folder where you have main.tf
+- create my-credentials-json (gcloud secrets add-iam-policy-binding my-credentials-json ... ) with you json credentials
