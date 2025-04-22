@@ -102,4 +102,25 @@ output "cloud_run_url" {
 #   value       = google_firestore_database.QuizzApp.name
 # }
 
+# Frontend bucket
+resource "google_storage_bucket" "frontend" {
+  name          = "quizlet-frontend-456810"  
+  location      = "US"
+  force_destroy = true
 
+  website {
+    main_page_suffix = "index.html"
+    not_found_page   = "index.html"
+  }
+}
+
+# Make bucket public
+resource "google_storage_bucket_iam_member" "public_access" {
+  bucket = google_storage_bucket.frontend.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+
+output "frontend_url" {
+  value = "https://storage.googleapis.com/${google_storage_bucket.frontend.name}/index.html"
+}
