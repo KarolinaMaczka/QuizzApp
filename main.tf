@@ -57,49 +57,41 @@ output "cloud_run_url" {
 }
 
 
-# provider "google-beta" {
-#   project     = "quizzapp-456810"
-#   credentials = file("credentials.json")
-#   region      = "us-central1"
-# }
+resource "google_cloud_run_service" "quizlet_frontend" {
+  name     = "quizlet-frontend"
+  location = "us-central1"
 
-# jeszcze do tej aplikacji trzeba włączyć email authentication w firebase i nie da sie tego odblokować w terraformie
+  template {
+    spec {
+      containers {
+        image = "gcr.io/quizzapp-456810/quizlet-frontend:latest"
+        ports {
+          container_port = 3000
+        }
+        env {
+          name  = "NEXT_PUBLIC_API_URL"
+          value = google_cloud_run_service.quizlet_backend.status[0].url
+        }
+      }
+    }
+  }
 
-# Włączenie wymaganych API: App Engine i Firestore
-# resource "google_project_service" "appengine" {
-#   service = "appengine.googleapis.com"
-#   project = "quizzapp-456810"
-# }
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+}
 
-# resource "google_project_service" "firestore" {
-#   service = "firestore.googleapis.com"
-#   project = "quizzapp-456810"
-# }
+resource "google_cloud_run_service_iam_member" "frontend_invoker" {
+  service  = google_cloud_run_service.quizlet_frontend.name
+  location = google_cloud_run_service.quizlet_frontend.location
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
 
-# App engine - ustaw na ownera, nie można chyba potem usunąć, ręcznie to w sumei ustawiałam
-
-# resource "google_app_engine_application" "default" {
-#   project     = "quizzapp-456810"
-#   location_id = "us-central1"
-
-#   depends_on = [google_project_service.appengine]
-# }
-
-# terraform destroy nie działa trzeba ręcznie usunąć
-# resource "google_firestore_database" "QuizzApp" {
-#   project     = "quizzapp-456810"
-#   name        = "(default)"
-#   location_id = "us-central1"
-#   type        = "FIRESTORE_NATIVE"
-
-#   depends_on = [
-#     google_project_service.firestore,
-#   ]
-# }
-
-# output "firestore_database_id" {
-#   description = "ID domyślnej bazy danych Firestore."
-#   value       = google_firestore_database.QuizzApp.name
-# }
+output "frontend_url" {
+  description = "URL of the deployed frontend Cloud Run service."
+  value       = google_cloud_run_service.quizlet_frontend.status[0].url
+}
 
 
